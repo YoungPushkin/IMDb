@@ -1,5 +1,3 @@
-Name projekt: IMDb 
-
 # **ETL proces datasetu IMDb**
     Tento repozitár obsahuje implementáciu ETL procesu v Snowflake pre analýzu dát z IMDb.
 Projekt sa zameriava na preskúmanie preferencií divákov, ich správania a charakteristík filmov na základe hodnotení, žánrov a filmových tímov. Výsledný model dát umožňuje vykonávať viacrozmernú analýzu a vizualizovať kľúčové metriky.
@@ -42,7 +40,7 @@ Surové dáta sú usporiadané v relačnom modeli, ktorý je znázornený na **e
 _______________________
 
 
-## **2 Dimenzionálny model**
+## **2. Dimenzionálny model**
 
 <p align="center">
   <img src="..." alt="Star Schema">
