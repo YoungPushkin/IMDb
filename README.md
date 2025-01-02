@@ -11,12 +11,12 @@ _______________________
 Táto analýza umožňuje identifikovať trendy v preferenciách divákov, najpopulárnejšie filmy a správanie používateľov.
 
 Zdrojové dáta pochádzajú z EDU datasetu dostupného [tu](https://edu.ukf.sk/mod/folder/view.php?id=252868). Dataset obsahuje
-    hlavných tabuliek:          
+    ##hlavných tabuliek:          
         - `movie`
         - `ratings`
         - `genre`
         - `names`
-    Podhlavných tabuliek:
+    ##Podhlavných tabuliek:
         - `director_mapping`
         - `role_mapping`
 
