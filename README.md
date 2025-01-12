@@ -63,7 +63,7 @@ _______________________
 
 ## **2. Dimenzionálny model**
 
-Navrhnutý bol hviezdicový model **(Snowflake schema)** pre efektívnu analýzu, kde centrálny bod tvorí faktová tabuľka **'fact_ratings'**, ktorá je prepojená s nasledujúcimi dimenziami:
+Navrhnutý bol model **(Snowflake schema)** pre efektívnu analýzu, kde centrálny bod tvorí faktová tabuľka **'fact_ratings'**, ktorá je prepojená s nasledujúcimi dimenziami:
 
 - **'dim_movie'**: Obsahuje podrobné informácie o filmoch (názov, rok vydania, dátum publikácie, dĺžka trvania, celosvetový príjem, produkčná spoločnosť).
 
@@ -82,6 +82,8 @@ Navrhnutý bol hviezdicový model **(Snowflake schema)** pre efektívnu analýzu
   <br>
   <em>Obrázok 2 Schéma snowflake pre IMDb</em>
 </p>
+
+Zvolil som Snowflake Schema, pretože je optimálne vhodná na prácu s komplexnými analytickými dotazmi. Táto štruktúra umožňuje efektívne ukladať dáta, minimalizovať duplicitu a ľahko sa prispôsobiť zmenám. Vďaka normalizácii tabuliek Snowflake Schema zjednodušuje správu veľkých objemov dát a poskytuje vysokú flexibilitu pri vykonávaní analýz v moderných systémoch spracovania dát.
 _______________________
 
 ## **3. ETL proces v Snowflake**
