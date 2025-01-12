@@ -82,9 +82,6 @@ Navrhnutý bol hviezdicový model **(Snowflake schema)** pre efektívnu analýzu
   <br>
   <em>Obrázok 2 Schéma hviezdy pre IMDb</em>
 </p>
-
-Štruktúra hviezdicového modelu je znázornená na diagrame nižšie. Diagram ukazuje prepojenia medzi faktovou tabuľkou a dimenziami
-
 _______________________
 
 ## **3. ETL proces v Snowflake**
