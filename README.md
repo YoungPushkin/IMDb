@@ -55,7 +55,7 @@ Navrhnutý bol hviezdicový model **(Snowflake schema)** pre efektívnu analýzu
 - **'dim_countries'**: Uchováva krajiny, v ktorých boli filmy vydané.
 
 <p align="center">
-  <img src="..." alt="Snowflake Schema">
+  <img src="Snowflake_schema.png" alt="Snowflake Schema">
   <br>
   <em>Obrázok 2 Schéma hviezdy pre IMDb</em>
 </p>
@@ -267,7 +267,7 @@ ETL proces v Snowflake umožnil spracovanie pôvodných dát z rôznych staging 
 - Údaje vizualizácie predstavujú analýzu dát z mojej Snowflake schémy, ktorá zahŕňa základné kritériá analýzy, ako sú zárobok, dĺžka filmov, výkon hercov, hlavné žánre (ktoré sa najčastejšie vyskytujú v databáze) a počet hodnoteného materiálu podľa krajín.
 
 <p align="center">
-  <img src="IMDb_vizualizacia.pdf" alt="ERD Schema">
+  <img src="IMDb_vizualizacia.jpg" alt="ERD Schema">
   <br>
   <em>Obrázok 3 Dashboard IMDb datasetu</em>
 </p>
