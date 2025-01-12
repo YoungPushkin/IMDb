@@ -98,12 +98,12 @@ movie_staging obsahovala polia s viacerými jazykmi a krajinami, ktoré boli ulo
 Príklad kódu:
 
 ```sql 
-        CREATE SEQUENCE dim_language_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE dim_language_seq START WITH 1 INCREMENT BY 1;
 
-        CREATE TABLE dim_languages (
-            id_language INT DEFAULT dim_language_seq.NEXTVAL PRIMARY KEY,
-            language_name VARCHAR(100) UNIQUE
-       );
+CREATE TABLE dim_languages (
+  id_language INT DEFAULT dim_language_seq.NEXTVAL PRIMARY KEY,
+  language_name VARCHAR(100) UNIQUE
+);
 ```
 Takéto vytvorenie tabuliek umožňuje presnejšiu analýzu dát a vytváranie prehľadnejších grafov, keďže údaje sú normalizované a rozdelené do samostatných dimenzií, čo zjednodušuje ich spracovanie a interpretáciu.
 
@@ -111,13 +111,13 @@ Aby údaje vyzerali ako zoznam, použil som funkciu LATERAL FLATTEN v kombináci
 
 Príklad kódu:
 ```sql 
-              INSERT INTO dim_languages (language_name)
-              SELECT
-                  DISTINCT TRIM(VALUE) AS language_name
-              FROM
-                  dim_movie, LATERAL FLATTEN(INPUT => SPLIT(languages, ','))
-              WHERE
-                  TRIM(VALUE) IS NOT NULL;
+INSERT INTO dim_languages (language_name)
+SELECT
+  DISTINCT TRIM(VALUE) AS language_name
+FROM
+  dim_movie, LATERAL FLATTEN(INPUT => SPLIT(languages, ','))
+WHERE
+  TRIM(VALUE) IS NOT NULL;
 ```
 Vytvorenie dočasných máp
 Použitím dočasných tabuliek (temp_language_map a temp_country_map) boli prepojené ID jazykov a krajín s filmami:
@@ -127,27 +127,27 @@ temp_country_map: Obsahuje mapovanie medzi filmami a krajinami.
 
 Dočasná tabuľka slúži na priradenie jedinečných ID jazykov z tabuľky dim_languages k jednotlivým filmom v tabuľke dim_movie. Pôvodné údaje o jazykoch vo filme boli uložené ako textové zoznamy. Táto operácia zabezpečuje, že každý jazyk je reprezentovaný svojím ID, čím sa zjednodušuje manipulácia s dátami. Tento proces je realizovaný príkazom:
 ```sql 
-              CREATE TEMPORARY TABLE temp_language_map AS
-              SELECT
-                  dm.id AS movie_id,
-                  ARRAY_AGG(dl.id_language) AS language_ids
-              FROM
-                  dim_movie dm
-                  JOIN dim_languages dl ON POSITION(TRIM(dl.language_name) IN dm.languages) > 0
-              GROUP BY dm.id;
-              MERGE INTO dim_movie dm USING temp_language_map tm ON dm.id = tm.movie_id
-              WHEN MATCHED THEN
-              UPDATE SET dm.language_ids = tm.language_ids;
+CREATE TEMPORARY TABLE temp_language_map AS
+SELECT
+  dm.id AS movie_id,
+  ARRAY_AGG(dl.id_language) AS language_ids
+FROM
+  dim_movie dm
+  JOIN dim_languages dl ON POSITION(TRIM(dl.language_name) IN dm.languages) > 0
+GROUP BY dm.id;
+MERGE INTO dim_movie dm USING temp_language_map tm ON dm.id = tm.movie_id
+WHEN MATCHED THEN
+UPDATE SET dm.language_ids = tm.language_ids;
 ```
 
 Dočasná tabuľka zabezpečuje prevod pôvodného textového zoznamu jazykov na štruktúrovaný formát. Namiesto toho, aby sa jazyk ukladal ako text (napríklad "angličtina, španielčina"), sú jazykové hodnoty mapované na konkrétne ID z dim_languages a ukladané ako pole ID (ARRAY) v tabuľke dim_movie. Tento proces je realizovaný prostredníctvom:
 
 ```sql 
-                    MERGE INTO dim_movie dm
-                    USING temp_language_map tm
-                    ON dm.id = tm.movie_id
-                    WHEN MATCHED THEN
-                    UPDATE SET dm.language_ids = tm.language_ids;
+MERGE INTO dim_movie dm
+USING temp_language_map tm
+ON dm.id = tm.movie_id
+WHEN MATCHED THEN
+UPDATE SET dm.language_ids = tm.language_ids;
 ```
 Celkovo, dočasná tabuľka zohráva kľúčovú rolu pri transformácii dát do čistejšieho, normalizovaného formátu, čo zabezpečuje lepšiu integritu, konzistenciu a efektívnosť pri ďalšom spracovaní a analýze dát.
 
@@ -159,20 +159,20 @@ Celkovo, dočasná tabuľka zohráva kľúčovú rolu pri transformácii dát do
 Tabuľka genre_staging obsahovala údaje o žánroch filmov, ktoré boli pôvodne uložené ako textové hodnoty. Aby som tieto údaje normalizoval a zjednodušil ich ďalšie spracovanie, rozhodol som sa vytvoriť samostatnú dimenzionálnu tabuľku dim_genre. V tejto tabuľke budú žánre uložené ako jedinečné hodnoty s priradenými ID, čím sa umožní efektívnejšie spracovanie a analýza dát.
 
 ```sql 
-            CREATE SEQUENCE dim_genre_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE dim_genre_seq START WITH 1 INCREMENT BY 1;
 
-            CREATE TABLE dim_genre (
-                id_genre INT DEFAULT dim_genre_seq.NEXTVAL PRIMARY KEY,
-                genre_name VARCHAR(100) NOT NULL
-            );
+CREATE TABLE dim_genre (
+    id_genre INT DEFAULT dim_genre_seq.NEXTVAL PRIMARY KEY,
+    genre_name VARCHAR(100) NOT NULL
+);
 ```
 Následne som vložil jedinečné žánre zo genre_staging do tabuľky dim_genre, aby som zabezpečil, že každý žáner bude reprezentovaný len raz. Tento krok pomohol odstrániť redundanciu a zjednodušil analýzu:
 
 
 ```sql 
-            INSERT INTO dim_genre (genre_name)
-            SELECT DISTINCT genre
-            FROM genre_staging;
+INSERT INTO dim_genre (genre_name)
+SELECT DISTINCT genre
+FROM genre_staging;
 ```
 
 
@@ -183,31 +183,31 @@ Takže, rovnako ako pre filmy, aj pre kategórie som vytvoril dočasnú tabuľku
 
 Príklad kódu:
 ```sql 
-              CREATE TABLE role_and_director_mapping_staging AS
-              SELECT
-                  movie_id,
-                  names_id,
-                  'Director' AS category
-              FROM
-                  MovieDB.staging.director_mapping_staging
-              UNION
-              SELECT
-                  movie_id,
-                  names_id,
-                  category
-              FROM
-                  MovieDB.staging.role_mapping_staging;
+CREATE TABLE role_and_director_mapping_staging AS
+SELECT
+  movie_id,
+  names_id,
+  'Director' AS category
+FROM
+  MovieDB.staging.director_mapping_staging
+UNION
+SELECT
+  movie_id,
+  names_id,
+  category
+FROM
+  MovieDB.staging.role_mapping_staging;
 ```
 Po tom, ako boli všetky údaje skombinované na jednom mieste, som vytvoril novú tabuľku dim_category, ktorá bude v budúcnosti prepojená s hlavnou tabuľkou fact_ratings.
 
 Príklad kódu:
 
 ```sql 
-              CREATE SEQUENCE category_id_seq START WITH 1 INCREMENT BY 1;
-              CREATE TABLE dim_category (
-                      id_dim_category INT DEFAULT category_id_seq.NEXTVAL PRIMARY KEY,
-                      category VARCHAR(100) NOT NULL
-              );
+CREATE SEQUENCE category_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE dim_category (
+    id_dim_category INT DEFAULT category_id_seq.NEXTVAL PRIMARY KEY,
+    category VARCHAR(100) NOT NULL
+);
 ```
 Príkaz `SELECT DISTINCT category` zabezpečuje, že sa do dim_category vloží len unikátna kategória, čím sa vytvárajú jedinečné záznamy v dimenzii kategórií pre ďalšiu analýzu.
 
@@ -217,35 +217,35 @@ Fact_ratings tabuľka bola upravená hlavne v súvislosti s pridaním nových cu
 
 Príklad kódu:
 ```sql 
-          INSERT INTO fact_ratings (
-              avg_rating,
-              total_votes,
-              median_rating,
-              dim_movie_id,
-              dim_genre_id,
-              dim_names_id,
-              dim_category_id
-          )
-          SELECT
-              rs.avg_rating,
-              rs.total_votes,
-              rs.median_rating,
-              m.id AS dim_movie_id,
-              dg.id_genre AS dim_genre_id,
-              n.id_dim_names AS dim_names_id,
-              dc.id_dim_category AS dim_category_id
-          FROM
-              ratings_staging rs
-              JOIN movie_staging m ON rs.movie_id = m.id
-              LEFT JOIN genre_staging gs ON rs.movie_id = gs.movie_id
-              LEFT JOIN dim_genre dg ON gs.genre = dg.genre_name
-              LEFT JOIN role_and_director_mapping_staging rdms ON rs.movie_id = rdms.movie_id
-              LEFT JOIN dim_names n ON rdms.names_id = n.id_dim_names
-              LEFT JOIN dim_category dc ON rdms.category = dc.category
-          WHERE
-              rs.avg_rating IS NOT NULL
-              AND rs.total_votes IS NOT NULL
-              AND rs.median_rating IS NOT NULL;
+INSERT INTO fact_ratings (
+    avg_rating,
+    total_votes,
+    median_rating,
+    dim_movie_id,
+    dim_genre_id,
+    dim_names_id,
+    dim_category_id
+)
+SELECT
+    rs.avg_rating,
+    rs.total_votes,
+    rs.median_rating,
+    m.id AS dim_movie_id,
+    dg.id_genre AS dim_genre_id,
+    n.id_dim_names AS dim_names_id,
+    dc.id_dim_category AS dim_category_id
+FROM
+    ratings_staging rs
+    JOIN movie_staging m ON rs.movie_id = m.id
+    LEFT JOIN genre_staging gs ON rs.movie_id = gs.movie_id
+    LEFT JOIN dim_genre dg ON gs.genre = dg.genre_name
+    LEFT JOIN role_and_director_mapping_staging rdms ON rs.movie_id = rdms.movie_id
+    LEFT JOIN dim_names n ON rdms.names_id = n.id_dim_names
+    LEFT JOIN dim_category dc ON rdms.category = dc.category
+WHERE
+    rs.avg_rating IS NOT NULL
+    AND rs.total_votes IS NOT NULL
+    AND rs.median_rating IS NOT NULL;
 
 ```
 ### **3.3 Load (Načítanie dát)**
@@ -261,3 +261,23 @@ DROP TABLE IF EXISTS ratings_staging;
 ```
 
 ETL proces v Snowflake umožnil spracovanie pôvodných dát z rôznych staging tabuliek do viacdimenzionálneho modelu typu hviezda. Tento proces zahŕňal čistenie, obohacovanie a reorganizáciu údajov. Výsledný model umožňuje efektívnu analýzu filmov, hodnotení, žánrov a ďalších faktorov, pričom poskytuje základ pre reporty a vizualizácie.
+
+## **4 Vizualizácia dát**
+
+<p align="center">
+  <img src="" alt="ERD Schema">
+  <br>
+  <em>Obrázok 3 Dashboard IMDb datasetu</em>
+</p>
+
+### **Graf 1:**
+
+### **Graf 2:**
+
+### **Graf 3:**
+
+### **Graf 4:**
+
+### **Graf 5:**
+
+### **Graf 6:**
