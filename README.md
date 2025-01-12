@@ -80,7 +80,7 @@ Navrhnutý bol hviezdicový model **(Snowflake schema)** pre efektívnu analýzu
 <p align="center">
   <img src="Snowflake_schema.png" alt="Snowflake Schema">
   <br>
-  <em>Obrázok 2 Schéma hviezdy pre IMDb</em>
+  <em>Obrázok 2 Schéma snowflake pre IMDb</em>
 </p>
 _______________________
 
