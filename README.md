@@ -175,7 +175,7 @@ UPDATE SET dm.language_ids = tm.language_ids;
 ```
 Celkovo, dočasná tabuľka zohráva kľúčovú rolu pri transformácii dát do čistejšieho, normalizovaného formátu, čo zabezpečuje lepšiu integritu, konzistenciu a efektívnosť pri ďalšom spracovaní a analýze dát.
 
-!Po vykonaní SQL dotazov odstránime všetky dočasné tabuľky, ktoré sú už nepotrebné pre daný časový úsek.!
+!Po vykonaní SQL dotazov odstránime všetky dočasné tabuľky, ktoré už nie sú potrebné pre daný časový úsek.!
 
 
 3.2.2
