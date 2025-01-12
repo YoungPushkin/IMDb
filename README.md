@@ -2,12 +2,35 @@
 # **ETL proces datasetu IMDb**
     Tento repozitár obsahuje implementáciu ETL procesu v Snowflake pre analýzu dát z IMDb.
 Projekt sa zameriava na preskúmanie preferencií divákov, ich správania a charakteristík filmov na základe hodnotení, žánrov a filmových tímov. Výsledný model dát umožňuje vykonávať viacrozmernú analýzu a vizualizovať kľúčové metriky.
+
+# **knižnica**
+- `CREATE DATABASE, CREATE SCHEMA`: Vytvorenie databázy a schémy.
+- `USE SCHEMA`: Nastavenie aktívnej schémy.
+- `CREATE TABLE, CREATE SEQUENCE`: Vytvorenie tabuliek a sekvencií.
+- `COPY INTO`: Načítanie dát zo súborov do tabuliek.
+- `INSERT INTO`: Vkladanie dát do tabuliek.
+- `SELECT, DISTINCT, JOIN (LEFT, INNER), UNION`: Výber a spájanie dát z rôznych tabuliek.
+- `LATERAL FLATTEN, ARRAY_AGG, POSITION`: Práca s poliami a reťazcami.
+- `MERGE INTO`: Zlučovanie dát.
+- `ALTER TABLE`: Úpravy tabuliek (pridanie stĺpcov).
+- `DROP TABLE`: Odstránenie tabuliek.
+- `TRIM, EXTRACT, NULL_IF`: Úprava a manipulácia s dátami.
+- `FILE_FORMAT, SKIP_HEADER`: Nastavenie formátu súboru pri načítaní dát.
+- `ROUND`: Zaokrúhľovanie hodnôt na požadovaný počet desatinných miest.
+- `COUNT`: Počítanie jedinečných hodnôt v stĺpci.
+- `CASE`: Podmienená logika pre kategorizáciu alebo transformáciu hodnôt.
+- `GROUP BY`: Agregácia hodnôt podľa definovaných kritérií.
+- `ORDER BY`: Zoraďovanie výsledkov podľa určitého stĺpca.
+- `LIMIT`: Obmedzenie počtu výsledkov na určený počet.
+- `WHERE, HAVING`: Filtrovanie výsledkov na základe podmienok.
+- `EXTRACT`: Extrahovanie roku alebo iných častí dátumu z dátumového stĺpca.
+- `REPLACE`: Nahradenie reťazcov v údajoch.
+
+
 _______________________
 
 ## **1. Úvod a popis zdrojových dát**
     Cieľom semestrálneho projektu je analyzovať dáta týkajúce sa filmov, divákov a ich hodnotení.
-Táto analýza umožňuje identifikovať trendy v preferenciách divákov, najpopulárnejšie filmy a správanie používateľov.
-
 Zdrojové dáta pochádzajú z EDU datasetu dostupného [tu](https://edu.ukf.sk/mod/folder/view.php?id=252868). Dataset obsahuje
 ## Hlavné tabuľky:
 - `movie`
@@ -42,7 +65,7 @@ _______________________
 
 Navrhnutý bol hviezdicový model **(Snowflake schema)** pre efektívnu analýzu, kde centrálny bod tvorí faktová tabuľka **'fact_ratings'**, ktorá je prepojená s nasledujúcimi dimenziami:
 
-- **'dim_movie'**: Obsahuje podrobné informácie o filmoch (názov, rok vydania, dátum publikácie, dĺžka trvania, krajina, celosvetový príjem, jazyky, produkčná spoločnosť).
+- **'dim_movie'**: Obsahuje podrobné informácie o filmoch (názov, rok vydania, dátum publikácie, dĺžka trvania, celosvetový príjem, produkčná spoločnosť).
 
 - **'dim_names'**: Uchováva informácie o menách (meno, výška, dátum narodenia, známe filmy).
 
@@ -62,19 +85,23 @@ Navrhnutý bol hviezdicový model **(Snowflake schema)** pre efektívnu analýzu
 
 Štruktúra hviezdicového modelu je znázornená na diagrame nižšie. Diagram ukazuje prepojenia medzi faktovou tabuľkou a dimenziami
 
+_______________________
+
 ## **3. ETL proces v Snowflake**
 ETL proces pozostával z troch hlavných fáz: `extrahovanie` (Extract), `transformácia` (Transform) a `načítanie` (Load). 
 Tento proces bol implementovaný v Snowflake s cieľom pripraviť zdrojové dáta zo staging vrstvy do viacdimenzionálneho modelu vhodného na analýzu a vizualizáciu.
 
+_______________________
+
 
 ### **3.1 Extract (Extrahovanie dát)**
-Dáta zo zdrojového datasetu vo formáte `.csv` boli najprv nahrané do Snowflake cez interné stage úložisko s názvom movie_data_stage. Stage slúži ako dočasné úložisko na rýchle nahrávanie a spracovanie dát. Vytvorenie stage bolo zabezpečené príkazom:
+Dáta zo zdrojového datasetu vo formáte `.csv` boli najprv nahrané do Snowflake cez interné stage úložisko s názvom `movie_data_stage`. Stage slúži ako dočasné úložisko na rýchle nahrávanie a spracovanie dát. Vytvorenie stage bolo zabezpečené príkazom:
 
 ```sql 
     CREATE OR REPLACE STAGE movie_data_stage;
  ```
 
-Po vytvorení stage, boli doň nahraté súbory obsahujúce údaje o filmoch, hercoch, žánroch, hodnoteniach, režiséroch a kategóriách. Na nahrávanie dát do staging tabuliek sa použil príkaz COPY INTO, ktorý importoval dáta z jednotlivých súborov (napríklad movie.csv, ratings.csv, names.csv a iné).
+Po vytvorení stage, boli doň nahraté súbory obsahujúce údaje o filmoch, hercoch, žánroch, hodnoteniach, režiséroch a kategóriách. Na nahrávanie dát do staging tabuliek sa použil príkaz `COPY INTO`, ktorý importoval dáta z jednotlivých súborov (napríklad movie.csv, ratings.csv, names.csv a iné).
 
 Príklad kódu na načítanie dát:
 
@@ -107,7 +134,7 @@ CREATE TABLE dim_languages (
 ```
 Takéto vytvorenie tabuliek umožňuje presnejšiu analýzu dát a vytváranie prehľadnejších grafov, keďže údaje sú normalizované a rozdelené do samostatných dimenzií, čo zjednodušuje ich spracovanie a interpretáciu.
 
-Aby údaje vyzerali ako zoznam, použil som funkciu LATERAL FLATTEN v kombinácii s rozdelením reťazca pomocou funkcie SPLIT. Týmto spôsobom boli hodnoty oddelené a spracované ako jednotlivé záznamy, čo umožnilo ich jednoduché vloženie do dimenzionálnych tabuliek.
+Aby údaje vyzerali ako zoznam, použil som funkciu `LATERAL` `FLATTEN` v kombinácii s rozdelením reťazca pomocou funkcie `SPLIT`. Týmto spôsobom boli hodnoty oddelené a spracované ako jednotlivé záznamy, čo umožnilo ich jednoduché vloženie do dimenzionálnych tabuliek.
 
 Príklad kódu:
 ```sql 
@@ -213,7 +240,7 @@ Príkaz `SELECT DISTINCT category` zabezpečuje, že sa do dim_category vloží 
 
 3.2.4
 `fact_ratings`:
-Fact_ratings tabuľka bola upravená hlavne v súvislosti s pridaním nových cudzích kľúčov a priradením správnych ID z dimenzií (ako dim_movie, dim_genre, dim_names a dim_category). Tento proces zabezpečuje, že všetky faktové údaje v tabuľke fact_ratings sú prepojené so správnymi dimenziami cez cudzí kľúč, čím sa umožňuje efektívne spracovanie a analýzu dát.
+Fact_ratings tabuľka bola upravená hlavne v súvislosti s pridaním nových cudzích kľúčov a priradením správnych ID z dimenzií (ako dim_movie, dim_genre, dim_names a dim_category). Tento proces zabezpečuje, že všetky faktové údaje v tabuľke fact_ratings sú prepojené so správnymi dimenziami cez cudzí kľúč, čím sa umožňuje efektívne spracovanie.
 
 Príklad kódu:
 ```sql 
@@ -262,6 +289,9 @@ DROP TABLE IF EXISTS ratings_staging;
 
 ETL proces v Snowflake umožnil spracovanie pôvodných dát z rôznych staging tabuliek do viacdimenzionálneho modelu typu hviezda. Tento proces zahŕňal čistenie, obohacovanie a reorganizáciu údajov. Výsledný model umožňuje efektívnu analýzu filmov, hodnotení, žánrov a ďalších faktorov, pričom poskytuje základ pre reporty a vizualizácie.
 
+
+_______________________
+
 ## **4 Vizualizácia dát**
 
 - Údaje vizualizácie predstavujú analýzu dát z mojej Snowflake schémy, ktorá zahŕňa základné kritériá analýzy, ako sú zárobok, dĺžka filmov, výkon hercov, hlavné žánre (ktoré sa najčastejšie vyskytujú v databáze) a počet hodnoteného materiálu podľa krajín.
@@ -271,6 +301,10 @@ ETL proces v Snowflake umožnil spracovanie pôvodných dát z rôznych staging 
   <br>
   <em>Obrázok 3 Dashboard IMDb datasetu</em>
 </p>
+
+
+
+_______________________
 
 ### **Graf 1:Priemerná dĺžka filmu podľa krajín**
 - Tento SQL dopyt vyberá krajiny s filmami, ktoré majú hodnotenie vyššie ako 7, a vypočíta priemernú dĺžku filmov pre každú krajinu. Výsledky sa zoradia podľa klesajúcej priemernej dĺžky a zobrazí sa 10 krajín s najvyššími hodnotami.
@@ -414,3 +448,4 @@ GROUP BY
 ORDER BY
     rating_group;
 ```
+**Autor:** Zadoia Rodion
