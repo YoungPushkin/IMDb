@@ -264,20 +264,153 @@ ETL proces v Snowflake umožnil spracovanie pôvodných dát z rôznych staging 
 
 ## **4 Vizualizácia dát**
 
+- Údaje vizualizácie predstavujú analýzu dát z mojej Snowflake schémy, ktorá zahŕňa základné kritériá analýzy, ako sú zárobok, dĺžka filmov, výkon hercov, hlavné žánre (ktoré sa najčastejšie vyskytujú v databáze) a počet hodnoteného materiálu podľa krajín.
+
 <p align="center">
-  <img src="" alt="ERD Schema">
+  <img src="IMDb_vizualizacia.pdf" alt="ERD Schema">
   <br>
   <em>Obrázok 3 Dashboard IMDb datasetu</em>
 </p>
 
-### **Graf 1:**
+### **Graf 1:Priemerná dĺžka filmu podľa krajín**
+- Tento SQL dopyt vyberá krajiny s filmami, ktoré majú hodnotenie vyššie ako 7, a vypočíta priemernú dĺžku filmov pre každú krajinu. Výsledky sa zoradia podľa klesajúcej priemernej dĺžky a zobrazí sa 10 krajín s najvyššími hodnotami.
 
-### **Graf 2:**
+```sql
+SELECT 
+    dc.country_name AS country,
+    ROUND(AVG(dm.duration), 2) AS average_movie_duration
+FROM 
+    dim_movie dm
+JOIN 
+    fact_ratings fr ON fr.dim_movie_id = dm.id
+JOIN 
+    LATERAL FLATTEN(INPUT => dm.country_ids) AS flattened_countries
+JOIN 
+    dim_countries dc ON dc.id_country = flattened_countries.VALUE
+WHERE 
+    fr.avg_rating > 7
+    AND dm.duration IS NOT NULL
+GROUP BY 
+    dc.country_name
+ORDER BY 
+    average_movie_duration DESC
+    limit 10 ;
+```
 
-### **Graf 3:**
+### **Graf 2: Celkový zárobok USA podľa rokov**
 
-### **Graf 4:**
+- Tento SQL dopyt vypočíta celkový svetový príjem filmov, ktoré boli vydané v USA v rokoch 2017, 2018 a 2019. Príjem je očistený od symbolov dolára a čiarky a výsledky sú zoskupené a zoradené podľa roku.
 
-### **Graf 5:**
+```sql
+SELECT
+    EXTRACT(YEAR FROM dm.date_published) AS year,
+    SUM(CAST(REPLACE(REPLACE(NULLIF(dm.worldwide_gross_income, 'NULL'), '$', ''), ',', '') AS DECIMAL(15, 2))) AS total_income
+FROM
+    dim_movie dm
+JOIN
+    LATERAL FLATTEN(INPUT => dm.country_ids) AS flattened_countries
+JOIN
+    dim_countries dc ON dc.id_country = flattened_countries.VALUE
+WHERE
+    dc.country_name = 'USA'
+    AND EXTRACT(YEAR FROM dm.date_published) IN (2017, 2018, 2019)
+    AND dm.worldwide_gross_income IS NOT NULL
+GROUP BY
+    EXTRACT(YEAR FROM dm.date_published)
+ORDER BY
+    year;
+```
 
-### **Graf 6:**
+### **Graf 3: Priemerné hodnotenie podľa hercov**
+- Tento SQL dopyt vypočíta priemerné hodnotenie filmov pre každého herca, ktorý sa objavil v viac ako 5 filmoch. Výsledky sú zoradené podľa priemerného hodnotenia herca a zobrazuje sa top 10 hercov.
+
+```sql
+SELECT
+    n.name AS actor_name,
+    ROUND(AVG(f.avg_rating), 2) AS avg_rating_per_actor,
+    COUNT(DISTINCT f.dim_movie_id) AS movie_count
+FROM
+    fact_ratings f
+JOIN dim_names n ON f.dim_names_id = n.id_dim_names
+JOIN dim_movie m ON f.dim_movie_id = m.id
+WHERE
+    f.avg_rating IS NOT NULL 
+GROUP BY
+    n.name
+HAVING
+    COUNT(DISTINCT f.dim_movie_id) > 5 
+ORDER BY
+    avg_rating_per_actor DESC
+LIMIT
+    10;
+```
+
+### **Graf 4:Počet filmov podľa krajín**
+- Tento SQL dopyt zistí počet rôznych filmov, ktoré sú spojené s každou krajinou. Výsledky sú zoradené podľa počtu filmov v klesajúcom poradí a zobrazí sa top 10 krajín.
+
+```sql
+SELECT
+    dc.country_name AS country,
+    COUNT(DISTINCT dm.id) AS num_movies
+FROM
+    dim_movie dm
+    JOIN LATERAL FLATTEN(INPUT => dm.country_ids) AS flattened_countries
+    JOIN dim_countries dc ON dc.id_country = flattened_countries.VALUE
+GROUP BY
+    dc.country_name
+ORDER BY
+    num_movies DESC
+limit 10;
+```
+
+### **Graf 5:Top 5 zánrov filmov**
+
+- Tento SQL dopyt zistí počet filmov v každom žánri, ktoré boli vydané medzi rokmi 2017 a 2019. Výsledky sú zoradené podľa počtu filmov v klesajúcom poradí a zobrazí sa top 5 žánrov.
+
+```sql
+SELECT
+    dg.genre_name AS genre,
+    COUNT(dm.id) AS movie_count
+FROM
+    dim_movie dm
+JOIN
+    fact_ratings fr ON dm.id = fr.dim_movie_id
+JOIN
+    dim_genre dg ON fr.dim_genre_id = dg.id_genre
+WHERE
+    EXTRACT(YEAR FROM dm.date_published) BETWEEN 2017 AND 2019
+GROUP BY
+    dg.genre_name
+ORDER BY
+    movie_count DESC
+LIMIT 5;
+```
+
+### **Graf 6:Počet filmov podľa hodnotenia**
+- Tento SQL dopyt rozdeľuje filmy podľa hodnotenia na tri skupiny: nízke (1.0-3.9), stredné (4.0-6.9) a vysoké (7.0-10.0). Výsledky ukazujú počet filmov v každej skupine hodnotenia a sú zoradené podľa skupiny hodnotenia.
+
+```sql
+SELECT
+    CASE
+        WHEN avg_rating >= 1.0
+        AND avg_rating <= 3.9 THEN '1.0-3.9 (Low)'
+        WHEN avg_rating >= 4.0
+        AND avg_rating <= 6.9 THEN '4.0-6.9 (Medium)'
+        WHEN avg_rating >= 7.0
+        AND avg_rating <= 10.0 THEN '7.0-10.0 (High)'
+    END AS rating_group,
+    COUNT(DISTINCT dim_movie_id) AS num_movies
+FROM
+    fact_ratings
+GROUP BY
+    CASE
+        WHEN avg_rating >= 1.0
+        AND avg_rating <= 3.9 THEN '1.0-3.9 (Low)'
+        WHEN avg_rating >= 4.0
+        AND avg_rating <= 6.9 THEN '4.0-6.9 (Medium)'
+        WHEN avg_rating >= 7.0
+        AND avg_rating <= 10.0 THEN '7.0-10.0 (High)'
+    END
+ORDER BY
+    rating_group;
+```
