@@ -97,7 +97,7 @@ _______________________
 Dáta zo zdrojového datasetu vo formáte `.csv` boli najprv nahrané do Snowflake cez interné stage úložisko s názvom `movie_data_stage`. Stage slúži ako dočasné úložisko na rýchle nahrávanie a spracovanie dát. Vytvorenie stage bolo zabezpečené príkazom:
 
 ```sql 
-    CREATE OR REPLACE STAGE movie_data_stage;
+CREATE OR REPLACE STAGE movie_data_stage;
  ```
 
 Po vytvorení stage, boli doň nahraté súbory obsahujúce údaje o filmoch, hercoch, žánroch, hodnoteniach, režiséroch a kategóriách. Na nahrávanie dát do staging tabuliek sa použil príkaz `COPY INTO`, ktorý importoval dáta z jednotlivých súborov (napríklad movie.csv, ratings.csv, names.csv a iné).
@@ -105,9 +105,9 @@ Po vytvorení stage, boli doň nahraté súbory obsahujúce údaje o filmoch, he
 Príklad kódu na načítanie dát:
 
 ```sql 
-    COPY INTO movie_staging
-    FROM @movie_data_stage/movie.csv
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1);
+COPY INTO movie_staging
+FROM @movie_data_stage/movie.csv
+FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1);
  ```
 V prípade, že počas nahrávania došlo k nekompletným alebo nekonzistentným záznamom, bol použitý parameter ON_ERROR = 'CONTINUE', ktorý umožnil pokračovanie procesu bez prerušenia, pričom chyby sa ignorovali.
 
